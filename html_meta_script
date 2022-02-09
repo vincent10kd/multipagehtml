@@ -1,0 +1,323 @@
+#==============================================================================#
+# Title: Wrapper functions for HTML output and Andreas functions               #
+# Author: vincent.tencate@unimedizin-mainz.de                                  #
+# Date last updated: 07.02.2022                                                #
+#==============================================================================#
+#                                                                              #
+#==============================================================================#
+# Comments:                                                                    #
+# Current version overwrites variables in global environment.                  #
+# This is to be changed in a later version.                                    #
+#==============================================================================#
+
+#======================================================#
+# Function definitions                                 #
+#======================================================#
+
+html_bgcol_schemes <- data.frame(matrix(nrow=5, ncol=5))
+colnames(html_bgcol_schemes) <- c('theme','bgcol','headercol','opacity','left_align')
+html_bgcol_schemes[1,] <- c('seafront','#b2e4eb','#75cdd9',0.2,TRUE)
+html_bgcol_schemes[2,] <- c('hades','#e08079','#d9574e',0.2,TRUE)
+html_bgcol_schemes[3,] <- c('mossy','#82c4a0','#39825a',0.3,FALSE)
+html_bgcol_schemes[4,] <- c('officespace','#bfbfbf','#8c8c8c',0.2,TRUE)
+html_bgcol_schemes[5,] <- c('meisterbuch','#044343','#044343',0.5,FALSE)
+
+
+init_html_settings <- function(funPath=getwd(),
+                               css_style='css_filename',
+                               fileName,
+                               bg_theme=NULL,
+                               html_bgcol='#b2e4eb',
+                               html_headercol='#75cdd9',
+                               bg_opacity=0.2,
+                               left_align=TRUE){
+  originalwd <<- getwd()
+  pfad0 <<- funPath
+  if(!dir.exists(pfad0)){
+    dir.create(pfad0)
+  }
+  if(!is.null(bg_theme)){
+    if(bg_theme%in%html_bgcol_schemes$theme){
+      bgind <- match(bg_theme,html_bgcol_schemes$theme)
+      html_bgcol <- html_bgcol_schemes[bgind,2]
+      html_headercol <- html_bgcol_schemes[bgind,3]
+      bg_opacity <- html_bgcol_schemes[bgind,4]
+      left_align <- html_bgcol_schemes[bgind,5]
+    }
+  }
+  left_align <- ifelse(left_align==TRUE, 'left','center')
+  centering <- ifelse(left_align=='left','xxx','auto')
+  pacman::p_load(openxlsx, kableExtra, flextable, officer, tableHTML)
+  check_dir <- paste0(funPath,'Data')
+  # if folder structure does not exist, generate it
+  if(!dir.exists(check_dir)){
+    dir.create(paste0(funPath,'Data'))
+    dir.create(paste0(funPath,'Documents'))
+    dir.create(paste0(funPath,'R'))
+    dir.create(paste0(funPath,'R_my_functions'))
+    dir.create(paste0(funPath,'Results_data'))
+  }
+  # if no CSS sheet is provided, generate basic CSS sheet
+  if(!file.exists(paste0(funPath,css_style,'.css'))){
+    print('making CSS')
+    tableHTML::make_css(list(c('body'),
+                  c('background-color','font-family','margin','padding',
+                    'font-size','line-height','text-align'),
+                  c(html_bgcol,'Geneva, Arial, Helvetica, Sans-Serif','20px','20px',
+                    '100%','175%',left_align)),
+             list(c('#cont'),c('width','padding','border',
+                               'background','text-align'),
+                  c('auto','20px 20px 20px 20px','1px solid #ffffff',
+                    paste0('rgba(255,255,255,',bg_opacity,')'),left_align)),
+             list(c('h1, h2, h3, h4, h5, h6'),
+                  c('color','font-weight','line-height','margin-bottom',
+                    'font-family','text-align'),
+                  c('black','normal','1','0.5em',
+                    'Geneva, Arial, Helvetica, Sans-Serif',left_align)),
+             list('h1','font-size','190%'),
+             list('h2','font-size','175%'),
+             list('h3','font-size','150%'),
+             list('h4','font-size','125%'),
+             list('h5','font-size','100%'),
+             list('h6','font-size','100%'),
+             
+             list('hr',c('color','background-color','border',
+                         'height','max-height','min-height','text-align'),
+                  c(html_headercol,html_headercol,'1px solid #ffffff',
+                    '5px','5px','5px',left_align)),
+             list(c('p'),c('background-color','border','padding','color'),
+                  c('#ffffff',paste0('1px solid ',html_headercol),'4px','#001122')),
+             list(c('a'),c('background-color','color'),c('#ffffff','#001122')),
+             list(c('#leftline'),c('padding-left','border-left','color'),
+                  c('10px',paste0('solid 2px ',html_headercol),html_headercol)),
+             list(c('table'), 
+                  c('background', 'background','margin-bottom',
+                    'border-style','border-width','border-color','border-collapse',
+                    'text-align','margin-left','margin-right'),
+                  c('linear-gradient(white, #e2dae8)', '#transparent','1.4em',
+                    'solid','2px',html_headercol,'collapse',left_align,centering,centering)),
+             list(c('tr'), c('background'), c('#transparent')),
+             list(c('tr:nth-child(even)'),c('background','background'),
+                  c('#f5f5f5','#transparent')),
+             list(c('tr:hover'),c('background'),c('#e2dae8')),
+             list(c('th'),
+                  c('padding','border-bottom','border-top','border-left','border-right',
+                    'background-color','border-color','color'),
+                  c('5px 5px 5px 5px','solid 1px black','solid 1px black','solid 1px black',
+                    'solid 1px black',html_headercol,html_headercol,'#ffffff')),
+             list(c('*:not(hr) th'),
+                  c('padding','border-bottom','border-top','border-left','border-right',
+                    'background-color','border-color','color'),
+                  c('5px 5px 5px 5px','solid 1px black','solid 1px black','solid 1px black',
+                    'solid 1px black',html_headercol,html_headercol,'#ffffff')),
+             list(c('td'),c('background','padding','border','border-color'),
+                  c('transparent','5px 5px 5px 5px','solid 1px black',html_headercol)),
+             list(c('#navcontainer'),c('background','width','margin','padding',
+                                       'font-family','text-align',
+                                       'margin-left','margin-right'),
+                  c('transparent','auto','0','10','georgia, Sans-Serif',left_align,
+                    centering,centering)),
+             list(c('*:not(hr) #navcontainer'),c('background','width','margin',
+                                                 'padding','font-family'),
+                  c('transparent','auto','0','10','arial, Sans-Serif')),
+             list(c('ul#navlist'),c('text-align','list-style','padding','margin'),
+                  c(left_align,'none','0','0 0 0 40')),
+             list(c('ul#navlist li a'),
+                  c('display','width','max-width','padding','margin','border','color',
+                    'text-decoration','background-color','max-height','height',
+                    'text-align','margin-left','margin-right'),
+                  c('block','600px','600px','0.1em 0.1em 0.4em 0.75em','1px',
+                    paste0('1px solid ',html_headercol),'#000000',
+                    'none','#e6f0d8','23px','23px',left_align,centering,centering)),
+             list(c('*:not(hr) ul#navlist li a'),
+                  c('font-size','display','padding','border','color',
+                    'text-decoration','background-color','max-height','height','overflow'),
+                  c('90%','block','0.1em 0.1em 0.4em 0.75em',
+                    paste0('1px solid ',html_headercol),'#000000',
+                    'none','#dfe5ee','20px','20px','hidden')),
+             list(c('ul#navlist li#active a'),'color','#0000aa'),
+             list('ul#navlist li a:visited','color','#0000aa'),
+             list(c('ul#navlist li a:hover','ul#navlist li#active a:hover'),
+                  c('color','border','background-color'),
+                  c('#ffffff','1px solid #ffffff',html_headercol)),
+             list(c('#lih'),c('font-weight','width','max-width','font-size','border',
+                             'padding','display','margin','background-color','color',
+                             'height','max-height','text-align','margin-left','margin-right'),
+                  c('bold','640px','640px','100%','1px solid #ffffff',
+                    '0.4em 0.3em 0.3em 0.75em','block','25 0 0 0',html_headercol,'#ffffff',
+                    '18px','18px',left_align,centering,centering)),
+             list(c('#brli'),
+                  c('width','max-width','border',
+                    'height','max-height','margin','background-color',
+                    'text-align','margin-left','margin-right'),
+                  c('602px','602px',paste0('1px solid',html_headercol),
+                    '12px','16px','0 0 0 0',html_headercol,
+                    left_align,centering,centering)),
+             list(c('img'),
+                  c('background-color'),
+                  c('#ffffff')),
+             file = paste0(funPath,css_style,'.css'))
+  }
+  css_style <<- paste0(css_style,'.css')
+  setwd(paste0(funPath,'Data'))
+  mainname <<- paste0(fileName)
+  pfad <<- paste0(funPath,'R/Output')
+  pfad2 <<- paste0(funPath,'Results_data')
+  pfad3 <<- paste0(funPath,'R/Output/Plots')
+  if(!dir.exists(pfad)){
+    dir.create(pfad)
+    dir.create(paste0(pfad,'/html'))
+    dir.create(paste0(pfad,'/Tabellen'))
+    dir.create(paste0(pfad,'/Tabellen/html'))
+    }
+  if(!dir.exists(pfad2)) dir.create(pfad2)
+  if(!dir.exists(pfad3)){
+    dir.create(pfad3)
+    dir.create(paste0(pfad3,'/html'))
+  }
+}
+
+
+init_functions_andreas <- function(funPath){
+  library(latticeExtra)
+  library(grid)
+  suppressWarnings(eval(parse(file = paste0(funPath,'R_my_functions/ade.fun.run.r')),
+                        envir=globalenv()))
+}
+
+
+load_data <- function(dataPath){
+  source(paste0(originalwd,dataPath))
+}
+
+
+print_signature2 <- function(name,role,
+                             department='Preventive Cardiology and Medical Prevention, Dept. of Cardiology',
+                             institute='University Medical Center of the Johannes Gutenberg University Mainz',
+                             email,file){
+  write(paste0("
+<p><b>",name,"</b> (",role,")<br>",
+department," <br>",
+institute,"<br>
+E-Mail: ", email,"<br>
+</p><p>",paste(base:::version$version.string, ':  ', utils:::citation()$'textVersion'),
+paste('</p><p>Date and time of creation:',date()),
+"</p> </div></Body></HTML>"),file,append=T)
+}
+
+create_html_main_page <- function(savePath,
+                                  title,
+                                  subtitle,
+                                  headerVec,
+                                  pageList,
+                                  sigName,
+                                  sigRole,
+                                  sigEmail){
+setwd(pfad)
+filename<-mainname
+css <- readChar(paste0(savePath,css_style), 10000)
+write(paste("
+<HTML><Head><Title>",paste(date()),"</Title> <style type='text/css'>", css ," </style></Head><body> <div id='cont'>
+<p><img  id='trans'  name=p1 align=left src='html/ghs_logo2.png'  width = 300  height = 100  border='0' >
+<img  id='trans'  name=p1 align=right src='html/logo.png' border='0'><br><br><br><br></p>
+<hr>
+<H2 align=center>",title,"<br>",subtitle,"</h2>
+<hr>
+<div  id='navcontainer'>
+<H2 id='udl' name=mainpage> Table of contents </H2>",
+
+# Loop through headers and pages for each header            
+paste(trimws(capture.output(
+  for(h in 1:length(headerVec)){
+    cat(paste("<H3  id='lih'>",headerVec[h],"</H3><ul id='navlist'>"))
+    for(p in 1:length(pageList[[h]])){
+      cat(paste("<li><a href=",
+      paste0('Tabellen/header_',h,'_page_',p,'.html>'),
+      pageList[[h]][p],
+      "</a></li>"))
+    }
+    cat(paste0('</ul>'))
+  })),collapse='')
+,
+# End paste and input signature
+"</div><hr>"),filename)
+print_signature2(sigName,sigRole,email=sigEmail,file=mainname)
+}
+
+#=========================================#
+# Create the child pages                  #
+#=========================================#
+
+create_html_sub_page <- function(fileName,
+                                 printList=NULL,
+                                 printNames=NULL,
+                                 printCaptions=NULL,
+                                 imageVec=NULL,
+                                 imageNames=NULL,
+                                 imageCaptions=NULL,
+                                 imageDims=c(NULL,NULL)){
+  
+setwd(pfad)
+filename<-paste0(fileName,".html")
+if('pfad0'%in%ls(globalenv())==FALSE){stop("Object pfad0 does not exist. Please run init_html_settings() first.")}
+css <- readChar(paste0(pfad0,css_style), 10000)
+
+## Page created on  
+write(paste0("
+<HTML><Head><Title>",paste(date())," </Title> <style type='text/css'>",css,
+"</style></Head><body> <div id='cont'><p>
+Page created on ", paste(date()),"</p>
+<hr>",
+
+## Display data.frames or matrices
+if(!is.null(printList)){
+  paste(trimws(capture.output(
+    for(p in 1:length(printList)){
+      write.xlsx(printList[[p]],paste0('Tabellen/',gsub('.html','',fileName),'_table_',p,'.xlsx'))
+      doc <- read_docx()
+      doc <- body_add_flextable(doc, value = autofit(flextable(as.data.frame(printList[[p]]))))
+      fileout <- tempfile(fileext = ".docx")
+      fileout <- paste0('Tabellen/',gsub('.html','',fileName),'_table_',p,'.docx') 
+      print(doc, target = fileout)
+      cat("<h3>",printNames[p],"</h3> <hr>",
+          capture.output(kable(printList[[p]])),
+          "<p><a href=",paste0(gsub('.html','',fileName),'_table_',p,'.xlsx'),
+          "> Save as .xlsx file.</a><br>
+          <a href=",paste0(gsub('.html','',fileName),'_table_',p,'.docx'),
+          ">Save as .docx file.</a> (Note: use the Autofit Window option in Word if table doesn't fit page.)</p>
+          <p>",
+          printCaptions[p],"</p><hr>")}
+  )),collapse='')
+}
+,
+## Display images
+if(!is.null(imageVec)){
+  paste(trimws(capture.output(
+    for(i in 1:length(imageVec)){
+      cat(paste0("<h3>",imageNames[i],"</h3> <hr>",
+                 paste0("<img src='",imageVec[i],".png' width = ",
+                 imageDims[1]," height = ",imageDims[2]," border='1'><p>
+                 <a href='",imageVec[i],".png'>Save as .png file</a><br>
+                  <a href='",imageVec[i],".wmf'>Save as .wmf file (editable with PowerPoint.)</a></p>"),
+                 "<p>",imageCaptions[i],"</p><hr>"))}
+  )),collapse='')
+}
+
+## End write, add back to main page link
+), paste0('Tabellen/',filename))
+write(paste("<p><a id='link' href=../",
+            mainname,
+            ">Back to main page</a></p></div></Body></HTML>", sep=''),
+      paste0('Tabellen/',filename),append=T)
+}
+
+
+#==============================================================================#
+#                                                                              #
+#==============================================================================#
+#                                                                              #
+#                         End of function definitions                          #
+#                                                                              #
+#==============================================================================#
+#                                                                              #
+#==============================================================================#
