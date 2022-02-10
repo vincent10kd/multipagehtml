@@ -1,7 +1,7 @@
 #==============================================================================#
 # Title: Wrapper functions for HTML output and Andreas functions               #
 # Author: vincent.tencate@unimedizin-mainz.de                                  #
-# Date last updated: 07.02.2022                                                #
+# Date last updated: 08.02.2022                                                #
 #==============================================================================#
 #                                                                              #
 #==============================================================================#
@@ -14,21 +14,23 @@
 # Function definitions                                 #
 #======================================================#
 
-html_bgcol_schemes <- data.frame(matrix(nrow=5, ncol=5))
+html_bgcol_schemes <- data.frame(matrix(nrow=6, ncol=5))
 colnames(html_bgcol_schemes) <- c('theme','bgcol','headercol','opacity','left_align')
 html_bgcol_schemes[1,] <- c('seafront','#b2e4eb','#75cdd9',0.2,TRUE)
 html_bgcol_schemes[2,] <- c('hades','#e08079','#d9574e',0.2,TRUE)
 html_bgcol_schemes[3,] <- c('mossy','#82c4a0','#39825a',0.3,FALSE)
 html_bgcol_schemes[4,] <- c('officespace','#bfbfbf','#8c8c8c',0.2,TRUE)
 html_bgcol_schemes[5,] <- c('meisterbuch','#044343','#044343',0.5,FALSE)
+html_bgcol_schemes[6,] <- c('smooth',';background-image: linear-gradient(45deg, #49a09d, #5f2c82)',
+                            'rgba(255, 255, 255, 0.1)',0.2,FALSE)
 
 
 init_html_settings <- function(funPath=getwd(),
                                css_style='css_filename',
                                fileName,
-                               bg_theme=NULL,
-                               html_bgcol='#b2e4eb',
-                               html_headercol='#75cdd9',
+                               bg_theme='smooth',
+                               html_bgcol=NULL,
+                               html_headercol=NULL,
                                bg_opacity=0.2,
                                left_align=TRUE){
   originalwd <<- getwd()
@@ -144,7 +146,9 @@ init_html_settings <- function(funPath=getwd(),
                              'padding','display','margin','background-color','color',
                              'height','max-height','text-align','margin-left','margin-right'),
                   c('bold','640px','640px','100%','1px solid #ffffff',
-                    '0.4em 0.3em 0.3em 0.75em','block','25 0 0 0',html_headercol,'#ffffff',
+                    '0.4em 0.3em 0.3em 0.75em','block',
+                    '25 0 0 0',
+                    html_headercol,'#ffffff',
                     '18px','18px',left_align,centering,centering)),
              list(c('#brli'),
                   c('width','max-width','border',
@@ -177,20 +181,6 @@ init_html_settings <- function(funPath=getwd(),
   }
 }
 
-
-init_functions_andreas <- function(funPath){
-  library(latticeExtra)
-  library(grid)
-  suppressWarnings(eval(parse(file = paste0(funPath,'R_my_functions/ade.fun.run.r')),
-                        envir=globalenv()))
-}
-
-
-load_data <- function(dataPath){
-  source(paste0(originalwd,dataPath))
-}
-
-
 print_signature2 <- function(name,role,
                              department='Preventive Cardiology and Medical Prevention, Dept. of Cardiology',
                              institute='University Medical Center of the Johannes Gutenberg University Mainz',
@@ -205,14 +195,16 @@ paste('</p><p>Date and time of creation:',date()),
 "</p> </div></Body></HTML>"),file,append=T)
 }
 
-create_html_main_page <- function(savePath,
-                                  title,
-                                  subtitle,
-                                  headerVec,
-                                  pageList,
-                                  sigName,
-                                  sigRole,
-                                  sigEmail){
+create_html_main_page <- function(savePath=NULL,
+                                  title=NULL,
+                                  subtitle=NULL,
+                                  headerVec=NULL,
+                                  pageList=NULL,
+                                  sigName='Your name here',
+                                  sigRole='Your role here',
+                                  sigEmail='youremail@email.com',
+                                  sigDept='Your department here',
+                                  sigInst='Your institute here'){
 setwd(pfad)
 filename<-mainname
 css <- readChar(paste0(savePath,css_style), 10000)
@@ -241,7 +233,12 @@ paste(trimws(capture.output(
 ,
 # End paste and input signature
 "</div><hr>"),filename)
-print_signature2(sigName,sigRole,email=sigEmail,file=mainname)
+print_signature2(sigName,
+                 sigRole,
+                 department = sigDept,
+                 institute = sigInst,
+                 email=sigEmail,
+                 file=mainname)
 }
 
 #=========================================#
