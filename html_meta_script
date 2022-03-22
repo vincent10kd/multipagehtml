@@ -1,13 +1,17 @@
 #==============================================================================#
-# Title: Wrapper functions for HTML output and Andreas functions               #
+# Title: Functions to generate HTML output                                     #
 # Author: vincent.tencate@unimedizin-mainz.de                                  #
-# Date last updated: 08.02.2022                                                #
+# Date last updated: 22.03.2022                                                #
 #==============================================================================#
 #                                                                              #
 #==============================================================================#
 # Comments:                                                                    #
 # Current version overwrites variables in global environment.                  #
 # This is to be changed in a later version.                                    #
+#==============================================================================#
+# Recent fixes:                                                                #
+# - Headers in tables no longer transparent with 'smooth' theme                #
+# - It can now be specified whether images should be plotted before tables     #
 #==============================================================================#
 
 #======================================================#
@@ -111,7 +115,8 @@ init_html_settings <- function(funPath=getwd(),
                   c('padding','border-bottom','border-top','border-left','border-right',
                     'background-color','border-color','color'),
                   c('5px 5px 5px 5px','solid 1px black','solid 1px black','solid 1px black',
-                    'solid 1px black',html_headercol,html_headercol,'#ffffff')),
+                    'solid 1px black',ifelse(bg_theme=='smooth','#55608e',html_headercol),
+                    ifelse(bg_theme=='smooth','#55608e',html_headercol),'#ffffff')),
              list(c('td'),c('background','padding','border','border-color'),
                   c('transparent','5px 5px 5px 5px','solid 1px black',html_headercol)),
              list(c('#navcontainer'),c('background','width','margin','padding',
@@ -181,9 +186,15 @@ init_html_settings <- function(funPath=getwd(),
   }
 }
 
+
+load_data <- function(dataPath){
+  source(paste0(originalwd,dataPath))
+}
+
+
 print_signature2 <- function(name,role,
-                             department='Preventive Cardiology and Medical Prevention, Dept. of Cardiology',
-                             institute='University Medical Center of the Johannes Gutenberg University Mainz',
+                             department=NULL,
+                             institute=NULL,
                              email,file){
   write(paste0("
 <p><b>",name,"</b> (",role,")<br>",
@@ -252,22 +263,16 @@ create_html_sub_page <- function(fileName,
                                  imageVec=NULL,
                                  imageNames=NULL,
                                  imageCaptions=NULL,
-                                 imageDims=c(NULL,NULL)){
+                                 imageDims=c(NULL,NULL),
+                                 imagesFirst=TRUE){
   
 setwd(pfad)
 filename<-paste0(fileName,".html")
 if('pfad0'%in%ls(globalenv())==FALSE){stop("Object pfad0 does not exist. Please run init_html_settings() first.")}
 css <- readChar(paste0(pfad0,css_style), 10000)
 
-## Page created on  
-write(paste0("
-<HTML><Head><Title>",paste(date())," </Title> <style type='text/css'>",css,
-"</style></Head><body> <div id='cont'><p>
-Page created on ", paste(date()),"</p>
-<hr>",
-
 ## Display data.frames or matrices
-if(!is.null(printList)){
+printTab <- function(){
   paste(trimws(capture.output(
     for(p in 1:length(printList)){
       write.xlsx(printList[[p]],paste0('Tabellen/',gsub('.html','',fileName),'_table_',p,'.xlsx'))
@@ -286,18 +291,49 @@ if(!is.null(printList)){
           printCaptions[p],"</p><hr>")}
   )),collapse='')
 }
-,
+
 ## Display images
-if(!is.null(imageVec)){
+printImg <- function(){
   paste(trimws(capture.output(
     for(i in 1:length(imageVec)){
       cat(paste0("<h3>",imageNames[i],"</h3> <hr>",
                  paste0("<img src='",imageVec[i],".png' width = ",
-                 imageDims[1]," height = ",imageDims[2]," border='1'><p>
+                        imageDims[1]," height = ",imageDims[2]," border='1'><p>
                  <a href='",imageVec[i],".png'>Save as .png file</a><br>
                   <a href='",imageVec[i],".wmf'>Save as .wmf file (editable with PowerPoint.)</a></p>"),
                  "<p>",imageCaptions[i],"</p><hr>"))}
   )),collapse='')
+}
+
+## Page created on  
+write(paste0("
+<HTML><Head><Title>",paste(date())," </Title> <style type='text/css'>",css,
+"</style></Head><body> <div id='cont'><p>
+Page created on ", paste(date()),"</p>
+<hr>",
+
+if(imagesFirst==TRUE){
+  if(!is.null(imageVec)){
+    printImg()
+  }
+}
+,
+if(imagesFirst==TRUE){
+  if(!is.null(printList)){
+    printTab()
+  }
+}
+,
+if(imagesFirst==FALSE){
+  if(!is.null(printList)){
+    printTab()
+  }
+}
+,
+if(imagesFirst==FALSE){
+  if(!is.null(imageVec)){
+    printImg()
+  }
 }
 
 ## End write, add back to main page link
