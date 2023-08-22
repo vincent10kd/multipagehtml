@@ -306,7 +306,7 @@ create_html_sub_page <- function(fileName,
         fileout <- paste0('Tabellen/',gsub('.html','',fileName),'_table_',p,'.docx') 
         print(doc, target = fileout)
         cat("<h3>",printNames[p],"</h3> <hr>",
-            capture.output(kable(printList[[p]])),
+            capture.output(kable(printList[[p]], escape = FALSE)),
             "<p><a href=",paste0(gsub('.html','',fileName),'_table_',p,'.xlsx'),
             "> Save as .xlsx file.</a><br>
             <a href=",paste0(gsub('.html','',fileName),'_table_',p,'.docx'),
