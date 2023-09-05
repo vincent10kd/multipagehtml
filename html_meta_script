@@ -289,8 +289,8 @@ create_html_sub_page <- function(fileName,
                                  imageCaptions=NULL,
                                  imageDims=c(NULL,NULL),
                                  imagesFirst=TRUE,
-                                 escape = FALSE,
-){
+                                 escape = FALSE)
+{
   
   setwd(pfad)
   filename<-paste0(fileName,".html")
